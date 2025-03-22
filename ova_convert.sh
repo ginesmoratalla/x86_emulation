@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+# Check for root privileges
+if [[ "$EUID" -ne 0 ]];
+  then
+    echo "[x] Script must be run with root privileges"
+    exit
+fi
+
 # Check if target file was provided
 if [[ -z "$1" ]];
   then
@@ -10,13 +17,6 @@ if [[ -z "$1" ]];
 fi
 
 OVA_FILE="$1"
-
-# Check for root privileges
-if [[ "$EUID" -ne 0 ]];
-  then
-    echo "[x] Script must be run with root privileges"
-    exit
-fi
 
 # Extract ova file
 mkdir ova_extracted
@@ -29,14 +29,10 @@ if [[ $? -eq 0 ]];
     exit
 fi
 
-
+# Find the vdmk files
 cd ova_extracted
 VMDK_FILE=$(ls . | grep ".vmdk" | xargs -I {} echo {})
 IFS='.' read -ra ADDR <<< "$VMDK_FILE"
-
-# Find the vdmk files
-echo "DEBUG "$VMDK_FILE" "${ADDR[0]}""
-
 qemu-img convert -f vmdk -O qcow2 "$VMDK_FILE" "${ADDR[0]}.qcow2"
 if [[ $? -eq 0 ]];
   then
